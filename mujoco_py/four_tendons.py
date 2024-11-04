@@ -145,10 +145,10 @@ threshold = 0.002
 
 r = 0.025
 lc = np.cos(np.pi/4) * r
-C_1 = np.array([-0.5-lc,  0.5+lc, 0.5])
-C_2 = np.array([+0.5+lc,  0.5+lc, 0.5])
-C_3 = np.array([+0.5+lc, -0.5-lc, 0.5])
-C_4 = np.array([-0.5-lc, -0.5-lc, 0.5])
+C_4 = np.array([-1.154-lc,  1.404+lc, 3.22]) # anchor points
+C_3 = np.array([+1.154+lc,  1.404+lc, 3.22])
+C_2 = np.array([+1.154+lc, -1.404-lc, 3.22])
+C_1 = np.array([-1.154-lc, -1.404-lc, 3.22])
 box_x, box_y, box_z = 0.05, 0.05, 0.05
 
 def compute_cables_lenghts(Ac_new):
