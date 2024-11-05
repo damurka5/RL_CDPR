@@ -127,7 +127,7 @@ if __name__ == '__main__':
     print(robot1.inverse_kinematics())
     
     print(robot1.jacobian())
-    print(robot1.B())
-        
+    print(robot1.B().shape)
+    
     # robot2 = CDPR4(approx=2)
     # print(robot2.inverse_kinematics(np.array([100,0,1000])))
