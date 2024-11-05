@@ -3,6 +3,7 @@ from mujoco.glfw import glfw
 import numpy as np
 import os
 import math
+from robot_model import *
 
 xml_path = '../mujoco_models/four_tendons.xml' #xml file (assumes this is in the same folder as this file)
 simend = 100 #simulation time
@@ -143,71 +144,17 @@ start_time = 5
 received_goal = False
 threshold = 0.002
 
-r = 0.025
-lc = np.cos(np.pi/4) * r
-C_4 = np.array([-1.154-lc,  1.404+lc, 3.22]) # anchor points
-C_3 = np.array([+1.154+lc,  1.404+lc, 3.22])
-C_2 = np.array([+1.154+lc, -1.404-lc, 3.22])
-C_1 = np.array([-1.154-lc, -1.404-lc, 3.22])
-box_x, box_y, box_z = 0.05, 0.05, 0.05
 
-def compute_cables_lenghts(Ac_new):
-    A_1 = Ac_new + np.array([-box_x*np.cos(np.pi/4),  box_x*np.cos(np.pi/4), box_z])
-    A_2 = Ac_new + np.array([ box_x*np.cos(np.pi/4),  box_x*np.cos(np.pi/4), box_z])
-    A_3 = Ac_new + np.array([ box_x*np.cos(np.pi/4), -box_x*np.cos(np.pi/4), box_z])
-    A_4 = Ac_new + np.array([-box_x*np.cos(np.pi/4), -box_x*np.cos(np.pi/4), box_z])
-
-    beta_1 = np.arctan2(A_1[1] - C_1[1], A_1[0] - C_1[0])
-    beta_2 = np.arctan2(A_2[1] - C_2[1], A_2[0] - C_2[0])
-    beta_3 = np.arctan2(A_3[1] - C_3[1], A_3[0] - C_3[0])
-    beta_4 = np.arctan2(A_4[1] - C_4[1], A_4[0] - C_4[0])
-
-    C_1_c = C_1 + np.array([ r*np.cos(beta_1),  r*np.sin(beta_1), 0])
-    C_2_c = C_2 + np.array([ r*np.cos(beta_2),  r*np.sin(beta_2), 0])
-    C_3_c = C_3 + np.array([ r*np.cos(beta_3),  r*np.sin(beta_3), 0])
-    C_4_c = C_4 + np.array([ r*np.cos(beta_4),  r*np.sin(beta_4), 0])
-
-    #
-    L_1 = np.linalg.norm(A_1 - C_1_c)
-    L_2 = np.linalg.norm(A_2 - C_2_c)
-    L_3 = np.linalg.norm(A_3 - C_3_c)
-    L_4 = np.linalg.norm(A_4 - C_4_c)
-
-    eps_1 = np.arccos(r / L_1)
-    eps_2 = np.arccos(r / L_2)
-    eps_3 = np.arccos(r / L_3)
-    eps_4 = np.arccos(r / L_4)
-
-    delta_1 = np.arccos(np.sqrt((A_1[0] - C_1_c[0])**2 + (A_1[1] - C_1_c[1])**2) / L_1)
-    delta_2 = np.arccos(np.sqrt((A_2[0] - C_2_c[0])**2 + (A_2[1] - C_2_c[1])**2) / L_2)
-    delta_3 = np.arccos(np.sqrt((A_3[0] - C_3_c[0])**2 + (A_3[1] - C_3_c[1])**2) / L_3)
-    delta_4 = np.arccos(np.sqrt((A_4[0] - C_4_c[0])**2 + (A_4[1] - C_4_c[1])**2) / L_4)
-
-    gamma_1 = eps_1 - delta_1
-    gamma_2 = eps_2 - delta_2
-    gamma_3 = eps_3 - delta_3
-    gamma_4 = eps_4 - delta_4
-
-    B_1 = C_1_c + np.array([r*np.cos(gamma_1)*np.cos(beta_1), r*np.cos(gamma_1)*np.sin(beta_1), r*np.sin(gamma_1)])
-    B_2 = C_2_c + np.array([r*np.cos(gamma_2)*np.cos(beta_2), r*np.cos(gamma_2)*np.sin(beta_2), r*np.sin(gamma_2)])
-    B_3 = C_3_c + np.array([r*np.cos(gamma_3)*np.cos(beta_3), r*np.cos(gamma_3)*np.sin(beta_3), r*np.sin(gamma_3)])
-    B_4 = C_4_c + np.array([r*np.cos(gamma_4)*np.cos(beta_4), r*np.cos(gamma_4)*np.sin(beta_4), r*np.sin(gamma_4)])
-
-    new_L_1 = r * (np.pi - gamma_1) + np.linalg.norm(A_1 - B_1)
-    new_L_2 = r * (np.pi - gamma_2) + np.linalg.norm(A_2 - B_2)
-    new_L_3 = r * (np.pi - gamma_3) + np.linalg.norm(A_3 - B_3)
-    new_L_4 = r * (np.pi - gamma_4) + np.linalg.norm(A_4 - B_4)
-
-    return new_L_1, new_L_2, new_L_3, new_L_4
-# A_init = np.array([0, 0, 0])
-new_L2_l, new_L2_r = 0, 0
 # print(data.qpos)
 # print(data.qvel)
+
+robot = CDPR4(approx=2)
+
 while not glfw.window_should_close(window):
     data.qvel = [0] * len(data.qvel)
     # print(data.qpos[4:7])
     Ac = data.qpos[4:7]
-    cur_L_1, cur_L_2, cur_L_3, cur_L_4 = compute_cables_lenghts(Ac)
+    cur_L_1, cur_L_2, cur_L_3, cur_L_4 = robot.inverse_kinematics(Ac)
     # break
     # print(f"{Ac = }")
     # print(Ac)
@@ -221,7 +168,7 @@ while not glfw.window_should_close(window):
         received_goal = True
         Ac_new = np.array([ax_new, ay_new, az_new])
 
-        new_L_1, new_L_2, new_L_3, new_L_4 = compute_cables_lenghts(Ac_new)
+        new_L_1, new_L_2, new_L_3, new_L_4 = robot.inverse_kinematics(Ac_new)
         # print(new_A_l, new_A_r)
         # print(new_L2_l, new_L2_r)
     # print(f"{abs(cur_L2_l-new_L2_l)}, {abs(cur_L2_r-new_L2_r)}")
@@ -231,6 +178,8 @@ while not glfw.window_should_close(window):
         data.qvel[1] = .5 * (cur_L_2 - new_L_2)
         data.qvel[2] = .5 * (cur_L_3 - new_L_3)
         data.qvel[3] = .5 * (cur_L_4 - new_L_4)
+        
+    data
 
     if received_goal and \
     abs(cur_L_1 - new_L_1) < threshold and \

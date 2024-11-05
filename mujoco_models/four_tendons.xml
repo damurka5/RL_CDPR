@@ -16,12 +16,12 @@
       <site name="top_main_site_1" pos="-0.025 0.00001 0" />
       <site name="top_sidesite_1" pos="0 0.05 0" />
 
-      <body name="rotor_1_down" pos="0 -2.22 0" euler="0 0 0">
+      <body name="rotor_1_down" pos="0 -1 0" euler="0 0 0">
         <geom name="rotor_1_down" type="cylinder" size=".025 .05"/>
         <site name="bot_main_site_1" pos="0.025 -0.00001 0" />
         <site name="bot_sidesite_1" pos="0 -0.05 0" />
 
-        <body name="slider_1" pos="-1 0 0">
+        <body name="slider_1" pos="-3 0 0">
           <inertial pos="0 0 0" mass="100" diaginertia="0.0001 0.0001 0.0001" />
           <joint name="slider_1" type="slide" axis="-1 0 0" />
           <geom type="box" size="0.01 0.01 0.01" />
@@ -35,12 +35,12 @@
       <site name="top_main_site_2" pos="-0.025 0.00001 0" />
       <site name="top_sidesite_2" pos="0 0.05 0" />
 
-      <body name="rotor_2_down" pos="0 -2.22 0" euler="0 0 0">
+      <body name="rotor_2_down" pos="0 -1 0" euler="0 0 0">
         <geom name="rotor_2_down" type="cylinder" size=".025 .05"/>
         <site name="bot_main_site_2" pos="0.025 -0.00001 0" />
         <site name="bot_sidesite_2" pos="0 -0.05 0" />
 
-        <body name="slider_2" pos="-1 0 0">
+        <body name="slider_2" pos="-3 0 0">
           <inertial pos="0 0 0" mass="100" diaginertia="0.0001 0.0001 0.0001" />
           <joint name="slider_2" type="slide" axis="-1 0 0" />
           <geom type="box" size="0.01 0.01 0.01" />
@@ -54,12 +54,12 @@
       <site name="top_main_site_3" pos="-0.025 0.00001 0" />
       <site name="top_sidesite_3" pos="0 0.05 0" />
 
-      <body name="rotor_3_down" pos="0 -2.22 0" euler="0 0 0">
+      <body name="rotor_3_down" pos="0 -1 0" euler="0 0 0">
         <geom name="rotor_3_down" type="cylinder" size=".025 .05"/>
         <site name="bot_main_site_3" pos="0.025 -0.00001 0" />
         <site name="bot_sidesite_3" pos="0 -0.05 0" />
 
-        <body name="slider_3" pos="-1 0 0">
+        <body name="slider_3" pos="-3 0 0">
           <inertial pos="0 0 0" mass="100" diaginertia="0.0001 0.0001 0.0001" />
           <joint name="slider_3" type="slide" axis="-1 0 0" />
           <geom type="box" size="0.01 0.01 0.01" />
@@ -73,12 +73,12 @@
       <site name="top_main_site_4" pos="-0.025 0.00001 0" />
       <site name="top_sidesite_4" pos="0 0.05 0" />
 
-      <body name="rotor_4_down" pos="0 -2.22 0" euler="0 0 0">
+      <body name="rotor_4_down" pos="0 -1 0" euler="0 0 0">
         <geom name="rotor_4_down" type="cylinder" size=".025 .05"/>
         <site name="bot_main_site_4" pos="0.025 -0.00001 0" />
         <site name="bot_sidesite_4" pos="0 -0.05 0" />
 
-        <body name="slider_4" pos="-1 0 0">
+        <body name="slider_4" pos="-3 0 0">
           <inertial pos="0 0 0" mass="100" diaginertia="0.0001 0.0001 0.0001" />
           <joint name="slider_4" type="slide" axis="-1 0 0" />
           <geom type="box" size="0.01 0.01 0.01" />
