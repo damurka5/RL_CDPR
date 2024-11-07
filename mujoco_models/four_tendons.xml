@@ -90,7 +90,7 @@
     <!-- End-effector -->
     <body name="box" pos="0 0 0">
       <freejoint />
-      <inertial pos="0 0 0" mass="1" diaginertia="0.0001 0.0001 0.0001"/>
+      <inertial pos="0 0 0" mass="1" diaginertia="0.001 0.001 0.001"/>
       <geom name="box" type="box" size="0.05 0.05 0.05" />
       <site name="corner_1" pos="-0.05  -0.05 0.05" />
       <site name="corner_2" pos=" 0.05  -0.05 0.05" />
@@ -139,9 +139,9 @@
   </tendon>
 
   <actuator>
-    <position name="slider_1" joint="slider_1" ctrlrange="-4.5 4.5"/>
-    <position name="slider_2" joint="slider_2" ctrlrange="-4.5 4.5"/>
-    <position name="slider_3" joint="slider_3" ctrlrange="-4.5 4.5"/>
-    <position name="slider_4" joint="slider_4" ctrlrange="-4.5 4.5"/>
+    <motor name="slider_1" joint="slider_1" ctrlrange="-4.5 45"/>
+    <motor name="slider_2" joint="slider_2" ctrlrange="-4.5 45"/>
+    <motor name="slider_3" joint="slider_3" ctrlrange="-4.5 45"/>
+    <motor name="slider_4" joint="slider_4" ctrlrange="-4.5 45"/>
   </actuator>
 </mujoco>

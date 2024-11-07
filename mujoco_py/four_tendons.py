@@ -142,19 +142,20 @@ started_recording = False
 start_time = 5
 
 received_goal = False
-threshold = 0.002
+threshold = 0.01
 
 
 # print(data.qpos)
 # print(data.qvel)
 
-robot = CDPR4(approx=2)
+robot = CDPR4(approx=1, pos=np.array([0,0,0]))
 
 while not glfw.window_should_close(window):
     data.qvel = [0] * len(data.qvel)
     # print(data.qpos[4:7])
     Ac = data.qpos[4:7]
-    cur_L_1, cur_L_2, cur_L_3, cur_L_4 = robot.inverse_kinematics(Ac)
+    robot.pos = Ac
+    cur_L_1, cur_L_2, cur_L_3, cur_L_4 = robot.inverse_kinematics()
     # break
     # print(f"{Ac = }")
     # print(Ac)
@@ -168,19 +169,26 @@ while not glfw.window_should_close(window):
         received_goal = True
         Ac_new = np.array([ax_new, ay_new, az_new])
 
-        new_L_1, new_L_2, new_L_3, new_L_4 = robot.inverse_kinematics(Ac_new)
+        robot.pos = Ac_new
+        
+        new_L_1, new_L_2, new_L_3, new_L_4 = robot.inverse_kinematics()
         # print(new_A_l, new_A_r)
         # print(new_L2_l, new_L2_r)
     # print(f"{abs(cur_L2_l-new_L2_l)}, {abs(cur_L2_r-new_L2_r)}")
-    if received_goal:
-        print(f"{(cur_L_1 - new_L_1):.3f}, {cur_L_2 - new_L_2:.3f}, {cur_L_3 - new_L_3:.3f}, {cur_L_4 - new_L_4:.3f}")
-        data.qvel[0] = .5 * (cur_L_1 - new_L_1)
-        data.qvel[1] = .5 * (cur_L_2 - new_L_2)
-        data.qvel[2] = .5 * (cur_L_3 - new_L_3)
-        data.qvel[3] = .5 * (cur_L_4 - new_L_4)
+    # if received_goal:
+    #     print(f"{(cur_L_1 - new_L_1):.3f}, {cur_L_2 - new_L_2:.3f}, {cur_L_3 - new_L_3:.3f}, {cur_L_4 - new_L_4:.3f}")
+    #     data.qvel[0] = .5 * (cur_L_1 - new_L_1)
+    #     data.qvel[1] = .5 * (cur_L_2 - new_L_2)
+    #     data.qvel[2] = .5 * (cur_L_3 - new_L_3)
+    #     data.qvel[3] = .5 * (cur_L_4 - new_L_4)
         
     data
-
+    # print(data.ctrl)
+    data.ctrl[0] = 20
+    data.ctrl[1] = 20
+    data.ctrl[2] = 20
+    data.ctrl[3] = 20
+    
     if received_goal and \
     abs(cur_L_1 - new_L_1) < threshold and \
     abs(cur_L_2 - new_L_2) < threshold and \
@@ -190,7 +198,7 @@ while not glfw.window_should_close(window):
         received_goal = False
 
     time_prev = data.time
-    while (data.time - time_prev < 1.0/60.0):
+    while (data.time - time_prev < 5.0/60.0): # speed up by increasing value
         mj.mj_step(model, data)
 
     if (data.time>=simend):
