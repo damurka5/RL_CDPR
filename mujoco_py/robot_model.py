@@ -6,7 +6,7 @@ params = {
     'A1':np.array([-1.154, -1.404, 3.220], dtype=np.float64),
     'A2':np.array([1.154, -1.404, 3.220], dtype=np.float64),
     'A3':np.array([1.154, 1.404, 3.220], dtype=np.float64),
-    'A4':np.array([-1.154, 1404, 3.220], dtype=np.float64),
+    'A4':np.array([-1.154, 1.404, 3.220], dtype=np.float64),
     'l1':1000.0, # servos are 1m lower than anchor points
     'l2':1000.0, # the initial length of each cable is 1m
     'l3':1000.0,
@@ -15,7 +15,7 @@ params = {
     'cable_gage':0.003, # m
     'drums_w':1, #m
     'initial_phis':np.array([100.0, 100.0, 100.0, 100.0], dtype=np.float64), # rads at [0,0,0] position of end-effector
-    'initial_ls':np.array([3697, 3697, 3697, 3697], dtype=np.float64), # [mm], A_i to  end-effector initial length
+    'initial_ls':np.array([3.697, 3.697, 3.697, 3.697], dtype=np.float64), # [mm], A_i to  end-effector initial length
     'box':np.array([0.5, 0.5, 0.5], dtype=np.float64),
     'r':0.025 # [mm] radius of pulley
 }
@@ -29,11 +29,11 @@ class CDPR4:
         self.pos = pos
         self.m = mass # mass of a load
         self.dt = 0.05
-        self.v = 0 # end effector velocity
+        self.v = np.array([0,0,0], dtype=np.float64) # end effector velocity
         self.a = 0 # end effector acceleration
         self.Kp = 1
         self.Kd = 1
-        self.t_f = 20 # sec
+        self.t_f = 5 # sec
         
         
     def inverse_kinematics_1(self, ee_pos):
@@ -120,30 +120,35 @@ class CDPR4:
     def B(self):
         B = np.zeros((6,4))
         
-        G = np.array([[0], [0], [g]])
         lower_rows = -(1/self.m)*self.jacobian().T
         
         B[3:6, :] = lower_rows
         return B
 
-    def control_pd(self, desired_pos): # PD controller
-        err = desired_pos - self.pos
-        # suppose we need 0 speed at desired point
-        return self.Kp*err + self.Kd*self.v
+    def control_pd(self, desired_pos, desired_vel): # PD controller
+        err = desired_pos - self.pos.reshape((3,1))
+        d_err = desired_vel - self.v.reshape((3,1))
+        Kp_matrix = self.Kp * np.ones((4,3))
+        Kd_matrix = self.Kd * np.ones((4,3))
         
-    def simulate(self, u, point):
+        return Kp_matrix@err + Kd_matrix@d_err 
+        
+    def simulate(self, u, point, vel):
+        point = point.reshape((3,1))
+        vel = vel.reshape((3,1))
         positions = []
         velocities = []
         
-        X = np.hstack(self.pos + [0,0,0]) # TODO change 0 0 0 to initial velocities
+        X = np.hstack((self.pos, [0,0,0]), dtype=np.float64).reshape((6,1)) # TODO change 0 0 0 to initial velocities
         t = np.linspace(0, self.t_f, int(self.t_f/self.dt))
         
         # Simulation loop
         for time in t:
             # Calculate acceleration
-            dXdt = self.B() @ u(point) + np.array([0, 0, 0, 0, 0, -g]).reshape((6,1))
+            dXdt = self.B() @ u(point, vel) + np.array([0, 0, 0, 0, 0, -g]).reshape((6,1))
             # Update velocities (last 3 elements of X)
             X[3:] += dXdt[3:] * self.dt
+            self.v = X[3:].flatten() 
             
             # Update positions (first 3 elements of X)
             X[:3] += X[3:] * self.dt

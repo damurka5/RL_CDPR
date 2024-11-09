@@ -184,10 +184,10 @@ while not glfw.window_should_close(window):
         
     data
     # print(data.ctrl)
-    data.ctrl[0] = 20
-    data.ctrl[1] = 20
-    data.ctrl[2] = 20
-    data.ctrl[3] = 20
+    data.ctrl[0] = 200
+    data.ctrl[1] = 200
+    data.ctrl[2] = 200
+    data.ctrl[3] = 200
     
     if received_goal and \
     abs(cur_L_1 - new_L_1) < threshold and \
