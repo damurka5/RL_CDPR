@@ -126,12 +126,15 @@ class CDPR4:
         return B
 
     def control_pd(self, desired_pos, desired_vel): # PD controller
-        err = desired_pos - self.pos.reshape((3,1))
-        d_err = desired_vel - self.v.reshape((3,1))
-        Kp_matrix = self.Kp * np.ones((4,3))
-        Kd_matrix = self.Kd * np.ones((4,3))
+        err = -desired_pos + self.pos.reshape((3,1))
+        d_err = -desired_vel + self.v.reshape((3,1))
+        Kp_matrix = self.Kp * self.jacobian() #np.ones((4,3))
+        Kd_matrix = self.Kd * self.jacobian() #np.ones((4,3))
         
-        return Kp_matrix@err + Kd_matrix@d_err 
+        Gravity = self.jacobian() @ np.array([0,0,-g]).reshape((3,1))
+        
+        # print(err)
+        return Kp_matrix@err + Kd_matrix@d_err + Gravity
         
     def simulate(self, u, point, vel):
         point = point.reshape((3,1))
@@ -139,20 +142,21 @@ class CDPR4:
         positions = []
         velocities = []
         
-        X = np.hstack((self.pos, [0,0,0]), dtype=np.float64).reshape((6,1)) # TODO change 0 0 0 to initial velocities
+        X = np.hstack((self.pos, self.v), dtype=np.float64).reshape((6,1)) # TODO change 0 0 0 to initial velocities
         t = np.linspace(0, self.t_f, int(self.t_f/self.dt))
-        
+        # print(X)
         # Simulation loop
         for time in t:
             # Calculate acceleration
+            v_prev = self.v
             dXdt = self.B() @ u(point, vel) + np.array([0, 0, 0, 0, 0, -g]).reshape((6,1))
+            # print(dXdt)
             # Update velocities (last 3 elements of X)
             X[3:] += dXdt[3:] * self.dt
             self.v = X[3:].flatten() 
             
             # Update positions (first 3 elements of X)
-            X[:3] += X[3:] * self.dt
-            
+            X[:3] += v_prev.reshape((3,1)) * self.dt + 0.5*dXdt[3:]*self.dt**2
             self.pos = X[:3].flatten()
 
             # Store results
@@ -163,11 +167,12 @@ class CDPR4:
 
     
 if __name__ == '__main__':        
-    robot1 = CDPR4(pos=np.array([100,0,1000]))
-    print(robot1.inverse_kinematics())
+    robot1 = CDPR4(pos=np.array([0,0,1]))
     
-    print(robot1.jacobian())
-    print(robot1.B().shape)
-    
+    desired_p = np.array([1,1,2]) # desired point is 2 m above the ground
+    desired_v = np.array([0,0,0])
+    robot1.Kp = .005
+    robot1.Kd = .007
+    poses, vels = robot1.simulate(robot1.control_pd, desired_p, desired_v)
     # robot2 = CDPR4(approx=2)
     # print(robot2.inverse_kinematics(np.array([100,0,1000])))
