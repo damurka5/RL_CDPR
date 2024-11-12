@@ -28,7 +28,7 @@ class CDPR4:
         self.approx = approx # check folder /maths_behind_cdpr for approximations description
         self.pos = pos
         self.m = mass # mass of a load
-        self.dt = 0.05
+        self.dt = 0.005
         self.v = np.array([0,0,0], dtype=np.float64) # end effector velocity
         self.a = 0 # end effector acceleration
         self.Kp = 1
