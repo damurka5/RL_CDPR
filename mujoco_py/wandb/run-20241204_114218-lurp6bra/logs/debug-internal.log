@@ -8,3 +8,4 @@
 {"time":"2024-12-04T11:42:18.888289+03:00","level":"INFO","msg":"Starting system monitor"}
 {"time":"2024-12-04T11:42:30.769232+03:00","level":"INFO","msg":"tensorboard: no root directory after 10 seconds, using working directory"}
 {"time":"2024-12-04T12:07:11.841473+03:00","level":"INFO","msg":"Pausing system monitor"}
+{"time":"2024-12-04T12:32:53.461743+03:00","level":"INFO","msg":"api: retrying error","error":"Post \"https://api.wandb.ai/graphql\": read tcp 10.8.0.3:50387->35.186.228.49:443: read: connection reset by peer"}
