@@ -1,0 +1,38 @@
+{
+  "os":  "macOS-15.1.1-arm64-arm-64bit",
+  "python":  "3.9.20",
+  "startedAt":  "2024-12-04T08:42:18.185919Z",
+  "program":  "/Users/damirnurtdinov/Desktop/My Courses/Диплом/RL_CDPR_MuJoCo/mujoco_py/10_StableBaselines3_PPO.ipynb",
+  "git":  {
+    "remote":  "git@github.com:damurka5/RL_CDPR_MuJoCo.git",
+    "commit":  "b6be1edebce907e630f7a4b3906b9b06ebfa8e03"
+  },
+  "email":  "damurka777@gmail.com",
+  "root":  "/Users/damirnurtdinov/Desktop/My Courses/Диплом/RL_CDPR_MuJoCo/mujoco_py",
+  "host":  "MacBook-Pro-2.local",
+  "username":  "damirnurtdinov",
+  "executable":  "/Users/damirnurtdinov/miniconda3/envs/cdpr_mujoco/bin/python",
+  "codePathLocal":  "10_StableBaselines3_PPO.ipynb",
+  "cpu_count":  8,
+  "cpu_count_logical":  8,
+  "disk":  {
+    "/":  {
+      "total":  "494384795648",
+      "used":  "442859589632"
+    }
+  },
+  "memory":  {
+    "total":  "17179869184"
+  },
+  "cpu":  {
+    "count":  8,
+    "countLogical":  8
+  },
+  "apple":  {
+    "name":  "Apple M1 Pro",
+    "ecpuCores":  2,
+    "pcpuCores":  6,
+    "gpuCores":  14,
+    "memoryGb":  16
+  }
+}

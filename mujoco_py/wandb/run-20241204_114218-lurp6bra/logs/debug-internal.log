@@ -1,0 +1,10 @@
+{"time":"2024-12-04T11:42:18.186757+03:00","level":"INFO","msg":"using version","core version":"0.18.7"}
+{"time":"2024-12-04T11:42:18.186788+03:00","level":"INFO","msg":"created symlink","path":"/Users/damirnurtdinov/Desktop/My Courses/Диплом/RL_CDPR_MuJoCo/mujoco_py/wandb/run-20241204_114218-lurp6bra/logs/debug-core.log"}
+{"time":"2024-12-04T11:42:18.297002+03:00","level":"INFO","msg":"created new stream","id":"lurp6bra"}
+{"time":"2024-12-04T11:42:18.29705+03:00","level":"INFO","msg":"stream: started","id":"lurp6bra"}
+{"time":"2024-12-04T11:42:18.29706+03:00","level":"INFO","msg":"writer: Do: started","stream_id":"lurp6bra"}
+{"time":"2024-12-04T11:42:18.297088+03:00","level":"INFO","msg":"handler: started","stream_id":"lurp6bra"}
+{"time":"2024-12-04T11:42:18.297148+03:00","level":"INFO","msg":"sender: started","stream_id":"lurp6bra"}
+{"time":"2024-12-04T11:42:18.888289+03:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-12-04T11:42:30.769232+03:00","level":"INFO","msg":"tensorboard: no root directory after 10 seconds, using working directory"}
+{"time":"2024-12-04T12:07:11.841473+03:00","level":"INFO","msg":"Pausing system monitor"}
