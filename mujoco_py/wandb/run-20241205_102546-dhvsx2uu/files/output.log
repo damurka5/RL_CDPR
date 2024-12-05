@@ -1,0 +1,24 @@
+/Users/damirnurtdinov/miniconda3/envs/cdpr_mujoco/lib/python3.9/site-packages/stable_baselines3/common/save_util.py:284: UserWarning: Path 'models/dhvsx2uu' does not exist. Will create it.
+  warnings.warn(f"Path '{path.parent}' does not exist. Will create it.")
+Model Saved as 'models/dhvsx2uu/ddpg_cdpr4_model.zip'.
+Starting Testing Episodes with Visualization...
+Episode 1: Total Reward = -30.49382344307378, Done: True, Steps: 17
+Final observation: [[ 0.59864575  1.1948771   1.0695843   0.          0.          0.
+  -0.5288867   0.6536277   0.48464155]]
+Saved GIF to cdpr4_gifs/ddpg/dhvsx2uu/episode_1.gif
+Episode 2: Total Reward = -17.06730753183365, Done: True, Steps: 8
+Final observation: [[ 0.7217892 -1.0978918  1.2438253  0.         0.         0.
+   0.890448  -1.2623854  0.4530776]]
+Saved GIF to cdpr4_gifs/ddpg/dhvsx2uu/episode_2.gif
+Episode 3: Total Reward = -44.743507742881775, Done: True, Steps: 14
+Final observation: [[ 0.65408957  0.40973055  1.0913854   0.          0.          0.
+  -0.11228436 -0.30641207  2.2469566 ]]
+Saved GIF to cdpr4_gifs/ddpg/dhvsx2uu/episode_3.gif
+Episode 4: Total Reward = -16.73592782020569, Done: True, Steps: 11
+Final observation: [[-0.21584164 -0.8343499   2.082349    0.          0.          0.
+   0.78717357 -0.62373674  2.457146  ]]
+Saved GIF to cdpr4_gifs/ddpg/dhvsx2uu/episode_4.gif
+Episode 5: Total Reward = -41.274225771427155, Done: True, Steps: 12
+Final observation: [[ 0.76822174 -0.10039522  2.898003    0.          0.          0.
+   1.1152169  -1.1014638   2.3485615 ]]
+Saved GIF to cdpr4_gifs/ddpg/dhvsx2uu/episode_5.gif
