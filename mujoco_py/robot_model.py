@@ -304,7 +304,7 @@ class CDPR4_env(gym.Env):
         self.last_reward = None
         self.max_possible_distance = self._precomute_max_distance()
 
-        self.reset()
+        # self.reset() # commented for evaluation
 
     def set_max_episode_steps(self, max_steps):
         self.max_episode_steps = max_steps
