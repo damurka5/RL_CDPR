@@ -4,3 +4,4 @@
 .cdpr_model.autosave.xopp
 maths_behind_code/.cdpr_model.autosave.xopp
 mujoco_py/04_RL_DDPGforCDPR copy.ipynb
+mujoco_py/wandb/
