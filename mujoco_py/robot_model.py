@@ -160,15 +160,15 @@ class CDPR4:
         positions = []
         velocities = []
         
-        X = np.hstack((self.pos, self.v), dtype=np.float64).reshape((6,1)) # TODO change 0 0 0 to initial velocities
+        X = np.hstack((self.pos, self.v), dtype=np.float64).reshape((6,1)) 
         t = np.linspace(0, self.t_f, int(self.t_f/self.dt))
-        # print(X)
+
         # Simulation loop
         for time in t:
             # Calculate acceleration
             v_prev = self.v
             dXdt = self.B() @ u(point, vel) + np.array([0, 0, 0, 0, 0, -g]).reshape((6,1))
-            # print(dXdt)
+
             # Update velocities (last 3 elements of X)
             X[3:] += dXdt[3:] * self.dt
             self.v = X[3:].flatten() 
@@ -209,10 +209,10 @@ class CDPR4_env(gym.Env):
         self.is_continuous = is_continuous
         self.num_discretized_actions = num_discretized_actions
 
-        # Action space: Continuous forces for each cable, scaled between 0 and 1
+        # Action space: Continuous forces for each cable, scaled between -1 and 1
         if self.is_continuous:
             self.action_space = spaces.Box(
-                low=np.zeros(self.cdpr.CDPR4_PARAMS["cables"], dtype=np.float32),
+                low=-np.ones(self.cdpr.CDPR4_PARAMS["cables"], dtype=np.float32),
                 high=np.ones(self.cdpr.CDPR4_PARAMS["cables"], dtype=np.float32),
                 dtype=np.float32,
             )
@@ -386,8 +386,9 @@ class CDPR4_env(gym.Env):
         assert action.shape == (self.cdpr.CDPR4_PARAMS["cables"],)
         if not self.is_continuous:
             action = action.astype(np.float32) / (self.num_discretized_actions - 1)
-
+        else:
         # Ensure action is within bounds
+            action = (np.clip(action, -1.0, 1.0) + 1)/2
         action = np.clip(action, 0.0, 1.0)
 
         # Scale actions to max_force
