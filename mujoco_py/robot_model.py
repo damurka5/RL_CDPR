@@ -37,7 +37,7 @@ MAX_EPISODE_STEPS = 32
 USE_TARGET_VELOCITY = False
 MAX_SPEED = 2
 MAX_FORCE = 15
-TOLERANCE = 0.025
+TOLERANCE = 0.01
 
 class CDPR4:
     def __init__(self, pos, CDPR4_PARAMS=CDPR4_PARAMS, approx=1, mass=1):
