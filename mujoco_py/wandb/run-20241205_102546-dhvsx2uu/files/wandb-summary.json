@@ -1,1 +1,0 @@
-{"train/critic_loss":120.91687,"train/actor_loss":-277.81683,"_runtime":2096.924547,"rollout/ep_rew_mean":-15.755867,"_wandb":{"runtime":2099},"time/fps":478,"global_step":999972,"_timestamp":1.733385638788139e+09,"_step":200135,"rollout/ep_len_mean":32.57,"train/learning_rate":8.0000005e-05}
