@@ -3,6 +3,8 @@ import scipy
 import gymnasium as gym
 from gymnasium import spaces
 import matplotlib.pyplot as plt
+import mujoco as mj
+from mujoco.glfw import glfw
 
 CDPR4_PARAMS = {
     'cables':4,
@@ -63,32 +65,32 @@ class CDPR4:
         
         return ls
     
-    def inverse_kinematics_2(self, ee_pos):
+    def get_real_anchor_points(self, ee_pos):
         r = self.CDPR4_PARAMS['r']
 
-        C_4 = self.CDPR4_PARAMS['A4'] # anchor points
+        C_4 = self.CDPR4_PARAMS['A4'] # center of the pulley
         C_3 = self.CDPR4_PARAMS['A3']
         C_2 = self.CDPR4_PARAMS['A2']
         C_1 = self.CDPR4_PARAMS['A1']
         
         box_x, box_y, box_z = self.CDPR4_PARAMS['box']
 
-        A_1 = ee_pos + np.array([-box_x*np.cos(np.pi/4),  box_x*np.cos(np.pi/4), box_z])
+        A_1 = ee_pos + np.array([-box_x*np.cos(np.pi/4),  box_x*np.cos(np.pi/4), box_z]) # box corners in World Coords
         A_2 = ee_pos + np.array([ box_x*np.cos(np.pi/4),  box_x*np.cos(np.pi/4), box_z])
         A_3 = ee_pos + np.array([ box_x*np.cos(np.pi/4), -box_x*np.cos(np.pi/4), box_z])
         A_4 = ee_pos + np.array([-box_x*np.cos(np.pi/4), -box_x*np.cos(np.pi/4), box_z])
 
-        beta_1 = np.arctan2(A_1[1] - C_1[1], A_1[0] - C_1[0])
+        beta_1 = np.arctan2(A_1[1] - C_1[1], A_1[0] - C_1[0]) # cable tilt (corner to the center of the pulley)
         beta_2 = np.arctan2(A_2[1] - C_2[1], A_2[0] - C_2[0])
         beta_3 = np.arctan2(A_3[1] - C_3[1], A_3[0] - C_3[0])
         beta_4 = np.arctan2(A_4[1] - C_4[1], A_4[0] - C_4[0])
 
-        C_1_c = C_1 + np.array([ r*np.cos(beta_1),  r*np.sin(beta_1), 0])
+        C_1_c = C_1 + np.array([ r*np.cos(beta_1),  r*np.sin(beta_1), 0]) # [x, y] change due to pulley dimensions
         C_2_c = C_2 + np.array([ r*np.cos(beta_2),  r*np.sin(beta_2), 0])
         C_3_c = C_3 + np.array([ r*np.cos(beta_3),  r*np.sin(beta_3), 0])
         C_4_c = C_4 + np.array([ r*np.cos(beta_4),  r*np.sin(beta_4), 0])
 
-        #
+        # cable length, top view projection
         L_1 = np.linalg.norm(A_1 - C_1_c)
         L_2 = np.linalg.norm(A_2 - C_2_c)
         L_3 = np.linalg.norm(A_3 - C_3_c)
@@ -109,22 +111,22 @@ class CDPR4:
         gamma_3 = eps_3 - delta_3
         gamma_4 = eps_4 - delta_4
 
-        B_1 = C_1_c + np.array([r*np.cos(gamma_1)*np.cos(beta_1), r*np.cos(gamma_1)*np.sin(beta_1), r*np.sin(gamma_1)])
+        B_1 = C_1_c + np.array([r*np.cos(gamma_1)*np.cos(beta_1), r*np.cos(gamma_1)*np.sin(beta_1), r*np.sin(gamma_1)]) # real anchor point
         B_2 = C_2_c + np.array([r*np.cos(gamma_2)*np.cos(beta_2), r*np.cos(gamma_2)*np.sin(beta_2), r*np.sin(gamma_2)])
         B_3 = C_3_c + np.array([r*np.cos(gamma_3)*np.cos(beta_3), r*np.cos(gamma_3)*np.sin(beta_3), r*np.sin(gamma_3)])
         B_4 = C_4_c + np.array([r*np.cos(gamma_4)*np.cos(beta_4), r*np.cos(gamma_4)*np.sin(beta_4), r*np.sin(gamma_4)])
 
-        new_L_1 = r * (np.pi - gamma_1) + np.linalg.norm(A_1 - B_1)
-        new_L_2 = r * (np.pi - gamma_2) + np.linalg.norm(A_2 - B_2)
-        new_L_3 = r * (np.pi - gamma_3) + np.linalg.norm(A_3 - B_3)
-        new_L_4 = r * (np.pi - gamma_4) + np.linalg.norm(A_4 - B_4)
-        ls = np.array([new_L_1,new_L_2,new_L_3,new_L_4], dtype=np.float64)
+        # new_L_1 = r * (np.pi - gamma_1) + np.linalg.norm(A_1 - B_1)
+        # new_L_2 = r * (np.pi - gamma_2) + np.linalg.norm(A_2 - B_2)
+        # new_L_3 = r * (np.pi - gamma_3) + np.linalg.norm(A_3 - B_3)
+        # new_L_4 = r * (np.pi - gamma_4) + np.linalg.norm(A_4 - B_4)
+        # ls = np.array([new_L_1,new_L_2,new_L_3,new_L_4], dtype=np.float64)
 
-        return ls
+        return np.array([B_1, B_2, B_3, B_4])
     
     def inverse_kinematics(self):
         if self.approx == 1: return self.inverse_kinematics_1(self.pos)
-        if self.approx == 2: return self.inverse_kinematics_2(self.pos)
+        if self.approx == 2: return self.inverse_kinematics_1(self.pos) # TODO: delete and refactor the code
         
     def jacobian(self):
         J = np.zeros((4,3))
@@ -207,7 +209,8 @@ class CDPR4_env(gym.Env):
         self.max_episode_steps = max_steps
         self.elapsed_steps = 0
         self.is_continuous = is_continuous
-        self.num_discretized_actions = num_discretized_actions
+        self.num_discretized_actions = num_discretized_actions,
+        xml_path = '../mujoco_models/four_tendons.xml' 
 
         # Action space: Continuous forces for each cable, scaled between -1 and 1
         if self.is_continuous:
@@ -303,7 +306,13 @@ class CDPR4_env(gym.Env):
         self.render_mode = "rgb_array"
         self.last_reward = None
         self.max_possible_distance = self._precomute_max_distance()
-
+        
+        # MuJoCo model creation
+        model = mj.MjModel.from_xml_path(xml_path)  # MuJoCo model
+        data = mj.MjData(model)                # MuJoCo data
+        cam = mj.MjvCamera()                        # Abstract camera
+        opt = mj.MjvOption()                        # visualization options
+        
         # self.reset() # commented for evaluation
 
     def set_max_episode_steps(self, max_steps):
