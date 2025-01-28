@@ -210,7 +210,6 @@ class CDPR4_env(gym.Env):
         self.elapsed_steps = 0
         self.is_continuous = is_continuous
         self.num_discretized_actions = num_discretized_actions,
-        xml_path = '../mujoco_models/four_tendons.xml' 
 
         # Action space: Continuous forces for each cable, scaled between -1 and 1
         if self.is_continuous:
@@ -306,12 +305,6 @@ class CDPR4_env(gym.Env):
         self.render_mode = "rgb_array"
         self.last_reward = None
         self.max_possible_distance = self._precomute_max_distance()
-        
-        # MuJoCo model creation
-        model = mj.MjModel.from_xml_path(xml_path)  # MuJoCo model
-        data = mj.MjData(model)                # MuJoCo data
-        cam = mj.MjvCamera()                        # Abstract camera
-        opt = mj.MjvOption()                        # visualization options
         
         # self.reset() # commented for evaluation
 
@@ -610,6 +603,135 @@ class CDPR4_env(gym.Env):
             plt.close(self.fig)
             self.fig = None
             self.ax = None
+
+class CDPR4_MuJoCo_env(gym.Env):
+    def __init__(self):
+        super(CDPR4_MuJoCo_env, self).__init__()
+        
+        # Load MuJoCo model
+        xml_path = '../mujoco_models/four_tendons.xml' 
+        self.model = mj.MjModel.from_xml_path(xml_path)
+        self.data = mj.MjData(self.model)
+        
+        # Define action and observation space
+        self.action_space = spaces.Box(low=0, high=1, shape=(4,), dtype=np.float32)
+        
+        # Reduced observation space (9 dimensions, without desired velocity)
+        self.observation_space = spaces.Box(
+                low=np.array(
+                    [
+                        -1.154 + 0.15,
+                        -1.404 + 0.15,
+                        0.0 + 0.15,  # Position lower bounds
+                        -self.max_speed,
+                        -self.max_speed,
+                        -self.max_speed,  # Velocity lower bounds
+                        -1.154,
+                        -1.404,
+                        0.0,  # Target position lower bounds
+                    ],
+                    dtype=np.float32,
+                ),
+                high=np.array(
+                    [
+                        1.154 - 0.15,
+                        1.404 - 0.15,
+                        3.220 - 0.15,  # Position upper bounds
+                        self.max_speed,
+                        self.max_speed,
+                        self.max_speed,  # Velocity upper bounds
+                        1.154,
+                        1.404,
+                        3.220,  # Target position upper bounds
+                    ],
+                    dtype=np.float32,
+                ),
+                dtype=np.float32,
+            )
+        
+        # Initialize state
+        self.cur_state = np.zeros(12)
+        self.max_episode_steps = 1000
+        self.elapsed_steps = 0
+        
+        # Rendering
+        self.fig = None
+        self.ax = None
+        
+    def step(self, action):
+        # Apply action to actuators
+        self.data.ctrl[:] = action * self.model.actuator_ctrlrange[:, 1]
+        
+        # Step the simulation
+        mj.mj_step(self.model, self.data)
+        
+        # Update state
+        pos = self.data.qpos[:3]
+        vel = self.data.qvel[:3]
+        target_pos = self.cur_state[6:9]
+        # desired_velocity = self.cur_state[9:12] # no desired velocity
+        
+        self.cur_state = np.hstack((pos, vel, target_pos)) # no desired velocity
+        
+        # Calculate reward, termination, etc.
+        reward = self._calculate_reward()
+        terminated = self._check_termination()
+        truncated = self.elapsed_steps >= self.max_episode_steps
+        
+        self.elapsed_steps += 1
+        
+        return self.cur_state, reward, terminated, truncated, {}
+    
+    def reset(self):
+        # Reset the simulation
+        mj.mj_resetData(self.model, self.data)
+        
+        # Reset state
+        self.cur_state = np.zeros(12)
+        self.elapsed_steps = 0
+        
+        return self.cur_state
+    
+    def render(self, mode='human'):
+        if mode == 'human':
+            if self.fig is None or self.ax is None:
+                self.fig = plt.figure()
+                self.ax = self.fig.add_subplot(111, projection='3d')
+                plt.ion()
+            
+            self.ax.clear()
+            
+            # Plot end effector
+            pos = self.cur_state[:3]
+            self.ax.scatter(pos[0], pos[1], pos[2], c='b', marker='^', label='End Effector')
+            
+            # Plot target
+            target_pos = self.cur_state[6:9]
+            self.ax.scatter(target_pos[0], target_pos[1], target_pos[2], c='r', marker='*', label='Target')
+            
+            # Set plot limits
+            self.ax.set_xlim([-2, 2])
+            self.ax.set_ylim([-2, 2])
+            self.ax.set_zlim([0, 4])
+            self.ax.set_xlabel('X')
+            self.ax.set_ylabel('Y')
+            self.ax.set_zlabel('Z')
+            self.ax.legend()
+            
+            plt.draw()
+            plt.pause(0.001)
+        
+        elif mode == 'rgb_array':
+            # Use MuJoCo's renderer to generate an RGB array
+            return mj.MjRenderContext(self.model, self.data).read_pixels()
+
+    def _calculate_reward(self):
+        # Implement your reward calculation here
+        return 0.0
+
+    def _check_termination(self):
+        # Implement your termination condition here
+        return False
 
     
 if __name__ == '__main__':        
