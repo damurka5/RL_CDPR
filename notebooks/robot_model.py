@@ -605,13 +605,28 @@ class CDPR4_env(gym.Env):
             self.ax = None
 
 class CDPR4_MuJoCo_env(gym.Env):
-    def __init__(self):
+    def __init__(self,
+        pos=np.array([0.0, 0.0, 1.0], dtype=np.float64),
+        approx=1,
+        mass=1,
+        max_steps=MAX_EPISODE_STEPS,):
         super(CDPR4_MuJoCo_env, self).__init__()
+        
+        self.cdpr = CDPR4(pos=pos, CDPR4_PARAMS=CDPR4_PARAMS, approx=approx, mass=mass)
+        self.desired_state = None  # Will be set in reset
+        self.cur_state = None  # Will be set in reset
+        self.max_speed = MAX_SPEED
+        self.max_force = MAX_FORCE
+        self.dt = 0.1
+        self.max_episode_steps = max_steps
+        self.elapsed_steps = 0
+        self.max_possible_distance = self._precomute_max_distance()
         
         # Load MuJoCo model
         xml_path = '../mujoco_models/four_tendons.xml' 
         self.model = mj.MjModel.from_xml_path(xml_path)
         self.data = mj.MjData(self.model)
+        self.ee_mass = self._get_end_effector_mass()
         
         # Define action and observation space
         self.action_space = spaces.Box(low=0, high=1, shape=(4,), dtype=np.float32)
@@ -658,27 +673,103 @@ class CDPR4_MuJoCo_env(gym.Env):
         self.fig = None
         self.ax = None
         
+    def _get_end_effector_mass(self):
+        """
+        Extract the mass of the end effector from the MuJoCo model.
+        """
+        # Find the body ID of the end effector
+        end_effector_body_id = mj.mj_name2id(self.model, mj.mjtObj.mjOBJ_BODY, "box")
+        
+        # Find the geom ID associated with the end effector body
+        # Assuming there's only one geom in the end effector body
+        geom_id = self.model.body_geomadr[end_effector_body_id]
+        
+        # Extract the mass of the geom
+        end_effector_mass = self.model.geom_mass[geom_id]
+        
+        return end_effector_mass    
+        
+    def _precomute_max_distance(self):
+        pos_low = self.observation_space.low[:3]
+        pos_high = self.observation_space.high[:3]
+        corners = np.array(
+            [
+                [pos_low[0], pos_low[1], pos_low[2]],
+                [pos_low[0], pos_low[1], pos_high[2]],
+                [pos_low[0], pos_high[1], pos_low[2]],
+                [pos_low[0], pos_high[1], pos_high[2]],
+                [pos_high[0], pos_low[1], pos_low[2]],
+                [pos_high[0], pos_low[1], pos_high[2]],
+                [pos_high[0], pos_high[1], pos_low[2]],
+                [pos_high[0], pos_high[1], pos_high[2]],
+            ]
+        )
+
+        # Calculate distances between all pairs of corners
+        max_possible_distance = 0.0
+        for i in range(len(corners)):
+            for j in range(i + 1, len(corners)):
+                dist = np.linalg.norm(corners[i] - corners[j])
+                max_possible_distance = max(max_possible_distance, dist)
+        return max_possible_distance
+    
     def step(self, action):
         # Apply action to actuators
         self.data.ctrl[:] = action * self.model.actuator_ctrlrange[:, 1]
+        
+        # Previous state
+        pos = self.data.qpos[:3]
+        vel = self.data.qvel[:3]
         
         # Step the simulation
         mj.mj_step(self.model, self.data)
         
         # Update state
-        pos = self.data.qpos[:3]
-        vel = self.data.qvel[:3]
+        new_pos = self.data.qpos[:3]
+        new_vel = self.data.qvel[:3]
         target_pos = self.cur_state[6:9]
         # desired_velocity = self.cur_state[9:12] # no desired velocity
         
-        self.cur_state = np.hstack((pos, vel, target_pos)) # no desired velocity
+        self.cur_state = np.hstack((new_pos, new_vel, target_pos)) # no desired velocity
+        
+        # Calculate distances to target before and after the action
+        dist_before = np.linalg.norm(pos - target_pos)
+        dist_after = np.linalg.norm(new_pos - target_pos)
         
         # Calculate reward, termination, etc.
-        reward = self._calculate_reward()
-        terminated = self._check_termination()
+        reward = self._calculate_reward(dist_before, dist_after)
+        
+        # Check termination conditions based on position error and step count
+        if np.allclose(new_pos, target_pos, atol=TOLERANCE, rtol=0):
+            terminated = True
+            reward += 10000.0
+
+        # Check if the new position is out of bounds
+        pos_low = self.observation_space.low[:3]
+        pos_high = self.observation_space.high[:3]
+        out_of_bounds = np.any(new_pos < pos_low) or np.any(new_pos > pos_high)
+            
         truncated = self.elapsed_steps >= self.max_episode_steps
         
+        if out_of_bounds and not terminated:
+            # reward -= 1000.0
+            terminated = True
+            info = {
+                "terminated": terminated,
+                "truncated": truncated,
+                # "position_error": current_position_error,
+                "reason": "Out of Bounds",
+            }
+            self.last_reward = reward
+            return self.cur_state, reward, terminated, truncated, info
+        
         self.elapsed_steps += 1
+        # Update state
+        self.cdpr.pos = new_pos
+        self.cdpr.v = new_vel
+        self.cur_state = np.hstack(
+            (new_pos, new_vel, target_pos)
+        ).astype(np.float32)
         
         return self.cur_state, reward, terminated, truncated, {}
     
@@ -725,13 +816,20 @@ class CDPR4_MuJoCo_env(gym.Env):
             # Use MuJoCo's renderer to generate an RGB array
             return mj.MjRenderContext(self.model, self.data).read_pixels()
 
-    def _calculate_reward(self):
-        # Implement your reward calculation here
-        return 0.0
+    def _calculate_reward(self, dist_before, dist_after):
+        reward = 0.0
+        
+         # Progress reward: Normalize the improvement relative to max possible distance
+        distance_improvement = dist_before - dist_after
+        normalized_improvement = distance_improvement / self.max_possible_distance
+        reward += normalized_improvement * 50.0
 
-    def _check_termination(self):
-        # Implement your termination condition here
-        return False
+        # Distance-based reward: Reward being close to target
+        normalized_distance = dist_after / self.max_possible_distance
+        proximity_reward = 1.0 - normalized_distance
+        reward += proximity_reward * 5.0
+        
+        return 0.0
 
     
 if __name__ == '__main__':        
