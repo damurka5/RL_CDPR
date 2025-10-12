@@ -1,4 +1,5 @@
 # RL CDPR
+[![arXiv](https://img.shields.io/badge/arXiv-2502.05855-df2a2a.svg?style=for-the-badge)](https://arxiv.org/abs/2502.05855)
 
 This work presents Reinforcement Learning algorithms for controlling the Cable-Driven Parallel Robot (4 cables, underconstrained). The work evaluates DDPG, PPO and TRPO algorithms on a simple robot model, providing a solid foundation for future research and experiments on a real cable-suspended robot.
 
